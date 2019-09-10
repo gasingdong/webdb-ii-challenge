@@ -4,9 +4,12 @@ exports.up = knex => {
 
     tbl
       .integer('car_id')
+      .unsigned()
+      .notNullable()
       .references('id')
       .inTable('cars')
-      .notNullable();
+      .onDelete('CASCADE')
+      .onUpdate('CASCADE');
 
     tbl.decimal('amount').notNullable();
 
