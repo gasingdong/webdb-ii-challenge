@@ -12,7 +12,7 @@ const validateCar = async (req, res, next) => {
     return;
   }
 
-  const { vin, make, model, mileage, transmission, status } = req.body;
+  const { vin, make, model, mileage } = req.body;
 
   if (vin && make && model && mileage) {
     try {
@@ -27,20 +27,35 @@ const validateCar = async (req, res, next) => {
     } catch (err) {
       next(err);
     }
-
-    req.car = {
-      vin,
-      make,
-      model,
-      mileage,
-      transmission,
-      status,
-    };
     next();
   } else {
     res
       .status(400)
       .json({ error: 'Cars require a VIN, Make, Model, and Mileage.' });
+  }
+};
+
+const validateCarId = async (req, res, next) => {
+  const { id } = req.params;
+
+  if (Number.isNaN(Number(id)) || !Number.isFinite(Number(id))) {
+    res.status(400).json({ error: 'The id is not a valid number.' });
+    return;
+  }
+
+  try {
+    const car = await db('cars')
+      .where({ id })
+      .first();
+
+    if (car) {
+      req.car = car;
+      next();
+    } else {
+      res.status(404).json({ error: 'There is no car with this id.' });
+    }
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -55,11 +70,42 @@ router
     }
   })
   .post(validateCar, async (req, res, next) => {
-    const { car } = req;
+    const { vin, make, model, mileage, transmission, status } = req.body;
 
     try {
-      const [id] = await db('cars').insert(car);
+      const newCar = {
+        vin,
+        make,
+        model,
+        mileage,
+        transmission,
+        status,
+      };
+      const [id] = await db('cars').insert(newCar);
       res.status(200).json({ id });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+router
+  .route('/:id')
+  .all(validateCarId)
+  .get((req, res) => {
+    res.status(200).json(req.car);
+  })
+  .delete(async (req, res, next) => {
+    const { id } = req.car;
+    try {
+      const deleted = await db('cars')
+        .where({ id })
+        .delete();
+
+      if (deleted) {
+        res.status(200).json(req.car);
+      } else {
+        throw new Error();
+      }
     } catch (err) {
       next(err);
     }
