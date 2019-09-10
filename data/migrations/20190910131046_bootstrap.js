@@ -3,7 +3,7 @@ exports.up = knex => {
     tbl.increments();
 
     tbl
-      .integer('vin')
+      .string('vin', 128)
       .unique()
       .notNullable();
 
