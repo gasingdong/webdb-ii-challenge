@@ -109,6 +109,32 @@ router
     } catch (err) {
       next(err);
     }
+  })
+  .put(async (req, res, next) => {
+    const { vin, make, model, mileage, transmission, status } = req.body;
+    const { car } = req;
+    try {
+      const updatedCar = {
+        ...car,
+        vin: vin || car.vin,
+        make: make || car.make,
+        model: model || car.model,
+        mileage: mileage || car.mileage,
+        transmission: transmission || car.transmission,
+        status: status || car.status,
+      };
+      const updated = await db('cars')
+        .where({ id: car.id })
+        .update(updatedCar);
+
+      if (updated) {
+        res.status(200).json(updatedCar);
+      } else {
+        throw new Error();
+      }
+    } catch (err) {
+      next(err);
+    }
   });
 
 const errorHandler = (err, req, res, next) => {
